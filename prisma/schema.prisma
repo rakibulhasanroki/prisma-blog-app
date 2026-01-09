@@ -50,10 +50,6 @@ model Comment {
 }
 
 // enum values
-<<<<<<< HEAD
-=======
-
->>>>>>> dabbee6 (updated info)
 enum PostStatus {
   DRAFT
   PUBLISHED
@@ -64,8 +60,6 @@ enum CommentStatus {
   APPROVED
   REJECT
 }
-<<<<<<< HEAD
-=======
 
 model User {
   id            String    @id
@@ -133,4 +127,3 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
->>>>>>> dabbee6 (updated info)
