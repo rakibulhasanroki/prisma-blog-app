@@ -1,5 +1,8 @@
-import { Post } from "../../../generated/prisma/client";
+import { boolean } from "better-auth/*";
+import { Post, PostStatus } from "../../../generated/prisma/client";
+import { PostWhereInput } from "../../../generated/prisma/models";
 import { prisma } from "../../lib/prisma";
+import { stat } from "node:fs";
 
 const createPost = async (
   data: Omit<Post, "id" | "createdAt" | "updatedAt" | "authorId">,
@@ -15,13 +18,72 @@ const createPost = async (
   return result;
 };
 
-const getAllPost = async (payload: { search: string | undefined }) => {
+const getAllPost = async ({
+  search,
+  tags,
+  isFeatured,
+  status,
+  authorId,
+}: {
+  search: string | undefined;
+  tags: string[] | [];
+  isFeatured: boolean | undefined;
+  status: PostStatus | undefined;
+  authorId: string | undefined;
+}) => {
+  const andConditions: PostWhereInput[] = [];
+
+  if (search) {
+    andConditions.push({
+      OR: [
+        {
+          title: {
+            contains: search as string,
+            mode: "insensitive",
+          },
+        },
+        {
+          content: {
+            contains: search as string,
+            mode: "insensitive",
+          },
+        },
+        {
+          tags: {
+            has: search as string,
+          },
+        },
+      ],
+    });
+  }
+
+  if (tags.length > 0) {
+    andConditions.push({
+      tags: {
+        hasEvery: tags as string[],
+      },
+    });
+  }
+
+  if (typeof isFeatured === "boolean") {
+    andConditions.push({ isFeatured });
+  }
+
+  if (status) {
+    andConditions.push({
+      status,
+    });
+  }
+
+  if (authorId) {
+    andConditions.push({
+      authorId,
+    });
+  }
+
   const result = await prisma.post.findMany({
     where: {
-      title: {
-        contains: payload.search as string,
-        mode: "insensitive",
-      },
+      AND: andConditions,
     },
   });
   return result;

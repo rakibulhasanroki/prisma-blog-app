@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
 import { postService } from "./post.service";
+import strict from "node:assert/strict";
+import { PostStatus } from "../../../generated/prisma/enums";
+import { string, toLowerCase } from "better-auth/*";
 
 const createPost = async (req: Request, res: Response) => {
   try {
@@ -29,13 +32,31 @@ const getAllPost = async (req: Request, res: Response) => {
     const { search } = req.query;
 
     const searchType = typeof search === "string" ? search : undefined;
-    const result = await postService.getAllPost({ search: searchType });
+    const tags = req.query.tags ? (req.query.tags as string).split(",") : [];
+    const isFeatured = req.query.isFeatured
+      ? req.query.isFeatured === "true"
+        ? true
+        : req.query.isFeatured === "false"
+        ? false
+        : undefined
+      : undefined;
+
+    const status = req.query.status as PostStatus | undefined;
+    const authorId = req.query.authorId as string | undefined;
+
+    const result = await postService.getAllPost({
+      search: searchType,
+      tags,
+      isFeatured,
+      status,
+      authorId,
+    });
 
     res.status(200).json(result);
   } catch (e: any) {
     res.status(404).json({
       message: "Get all post failed",
-      error: e.message,
+      error: e,
     });
   }
 };
