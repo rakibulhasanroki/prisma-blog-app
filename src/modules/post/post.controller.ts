@@ -3,6 +3,7 @@ import { postService } from "./post.service";
 import strict from "node:assert/strict";
 import { PostStatus } from "../../../generated/prisma/enums";
 import { string, toLowerCase } from "better-auth/*";
+import paginationSort from "../../helper/paginationSorting";
 
 const createPost = async (req: Request, res: Response) => {
   try {
@@ -44,13 +45,37 @@ const getAllPost = async (req: Request, res: Response) => {
     const status = req.query.status as PostStatus | undefined;
     const authorId = req.query.authorId as string | undefined;
 
+    const { page, limit, skip, sortBy, sortOrder } = paginationSort(req.query);
+
     const result = await postService.getAllPost({
       search: searchType,
       tags,
       isFeatured,
       status,
       authorId,
+      page,
+      limit,
+      skip,
+      sortBy,
+      sortOrder,
     });
+
+    res.status(200).json(result);
+  } catch (e: any) {
+    res.status(404).json({
+      message: "Get all post failed",
+      error: e,
+    });
+  }
+};
+
+const getPostById = async (req: Request, res: Response) => {
+  try {
+    const { postId } = req.params;
+    if (!postId) {
+      throw new Error("PostId is  required");
+    }
+    const result = await postService.getPostById(postId);
 
     res.status(200).json(result);
   } catch (e: any) {
@@ -64,4 +89,5 @@ const getAllPost = async (req: Request, res: Response) => {
 export const postController = {
   createPost,
   getAllPost,
+  getPostById,
 };
