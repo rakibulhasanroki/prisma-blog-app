@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { CommentService } from "./comment.service";
+import { CommentStatus } from "../../../generated/prisma/enums";
 
 const createComment = async (req: Request, res: Response) => {
   try {
@@ -84,20 +85,37 @@ const updateComment = async (req: Request, res: Response) => {
   try {
     const { commentId } = req.params;
     const authorId = req.user?.id;
+    const { content, status } = req.body;
+
+    const updateBody: { content?: string; status?: CommentStatus } = {};
+    if (content !== undefined) {
+      updateBody.content = content;
+    }
+
+    if (status !== undefined) {
+      if (req.user?.role !== "ADMIN") {
+        return res.status(403).json({
+          message: "Only admin can change status",
+        });
+      }
+      updateBody.status = status;
+    }
 
     const result = await CommentService.updateComment(
       commentId as string,
       authorId as string,
-      req.body
+      updateBody
     );
 
     res.status(200).json({
       data: result,
     });
   } catch (e: any) {
+    const errorMessage =
+      e instanceof Error ? e.message : "Comment update failed";
     res.status(404).json({
-      message: "Comment update failed",
-      error: e,
+      message: errorMessage,
+      details: e,
     });
   }
 };

@@ -94,13 +94,15 @@ const updateComment = async (
       id: commentId,
       authorId,
     },
-    select: {
-      id: true,
-    },
   });
   if (!commentData) {
     throw new Error("Invalid input");
   }
+
+  if (commentData.status === data.status) {
+    throw new Error("Already up to date");
+  }
+
   return await prisma.comment.update({
     where: {
       id: commentData.id,

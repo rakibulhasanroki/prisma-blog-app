@@ -72,6 +72,7 @@ const getAllPost = async (req: Request, res: Response) => {
 const getPostById = async (req: Request, res: Response) => {
   try {
     const { postId } = req.params;
+    // console.log(postId);
     if (!postId) {
       throw new Error("PostId is  required");
     }
@@ -80,7 +81,25 @@ const getPostById = async (req: Request, res: Response) => {
     res.status(200).json(result);
   } catch (e: any) {
     res.status(404).json({
-      message: "Get all post failed",
+      message: "Get  post by id  failed",
+      error: e,
+    });
+  }
+};
+
+const getMyPost = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    console.log(user);
+    if (!user) {
+      throw new Error("user not found");
+    }
+    const result = await postService.getMyPost(user.id as string);
+
+    res.status(200).json(result);
+  } catch (e: any) {
+    res.status(404).json({
+      message: "Get my post failed",
       error: e,
     });
   }
@@ -90,4 +109,5 @@ export const postController = {
   createPost,
   getAllPost,
   getPostById,
+  getMyPost,
 };
