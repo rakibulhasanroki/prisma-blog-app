@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { postService } from "./post.service";
 import strict from "node:assert/strict";
 import { PostStatus } from "../../../generated/prisma/enums";
@@ -6,7 +6,7 @@ import { string, toLowerCase } from "better-auth/*";
 import paginationSort from "../../helper/paginationSorting";
 import { UserRole } from "../../middleware/auth";
 
-const createPost = async (req: Request, res: Response) => {
+const createPost = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user;
     if (!user) {
@@ -22,10 +22,7 @@ const createPost = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (e: any) {
-    res.status(404).json({
-      message: "Post creation failed",
-      error: e.message,
-    });
+    next(e);
   }
 };
 
@@ -106,7 +103,7 @@ const getMyPost = async (req: Request, res: Response) => {
   }
 };
 
-const updatePost = async (req: Request, res: Response) => {
+const updatePost = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user;
     const { postId } = req.params;
@@ -124,11 +121,7 @@ const updatePost = async (req: Request, res: Response) => {
 
     res.status(200).json(result);
   } catch (e: any) {
-    const errorMessage = e instanceof Error ? e.message : "Post update failed";
-    res.status(404).json({
-      message: errorMessage,
-      details: e,
-    });
+    next(e);
   }
 };
 
@@ -137,7 +130,7 @@ const deletePost = async (req: Request, res: Response) => {
     const user = req.user;
     const { postId } = req.params;
     const isAdmin = user?.role === UserRole.ADMIN;
-    console.log(user, isAdmin);
+
     if (!user) {
       throw new Error("user not found");
     }
