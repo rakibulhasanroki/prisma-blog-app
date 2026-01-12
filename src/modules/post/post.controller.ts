@@ -4,6 +4,7 @@ import strict from "node:assert/strict";
 import { PostStatus } from "../../../generated/prisma/enums";
 import { string, toLowerCase } from "better-auth/*";
 import paginationSort from "../../helper/paginationSorting";
+import { UserRole } from "../../middleware/auth";
 
 const createPost = async (req: Request, res: Response) => {
   try {
@@ -90,7 +91,7 @@ const getPostById = async (req: Request, res: Response) => {
 const getMyPost = async (req: Request, res: Response) => {
   try {
     const user = req.user;
-    console.log(user);
+
     if (!user) {
       throw new Error("user not found");
     }
@@ -105,9 +106,76 @@ const getMyPost = async (req: Request, res: Response) => {
   }
 };
 
+const updatePost = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    const { postId } = req.params;
+    const isAdmin = user?.role === UserRole.ADMIN;
+    console.log(user, isAdmin);
+    if (!user) {
+      throw new Error("user not found");
+    }
+    const result = await postService.updatePost(
+      postId as string,
+      req.body,
+      user.id,
+      isAdmin
+    );
+
+    res.status(200).json(result);
+  } catch (e: any) {
+    const errorMessage = e instanceof Error ? e.message : "Post update failed";
+    res.status(404).json({
+      message: errorMessage,
+      details: e,
+    });
+  }
+};
+
+const deletePost = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    const { postId } = req.params;
+    const isAdmin = user?.role === UserRole.ADMIN;
+    console.log(user, isAdmin);
+    if (!user) {
+      throw new Error("user not found");
+    }
+    const result = await postService.deletePost(
+      postId as string,
+      user.id,
+      isAdmin
+    );
+
+    res.status(200).json(result);
+  } catch (e: any) {
+    const errorMessage = e instanceof Error ? e.message : "Post delete failed";
+    res.status(404).json({
+      message: errorMessage,
+      details: e,
+    });
+  }
+};
+
+const getStats = async (req: Request, res: Response) => {
+  try {
+    const result = await postService.getStats();
+    res.status(200).json(result);
+  } catch (e: any) {
+    const errorMessage =
+      e instanceof Error ? e.message : " Stats fetched failed";
+    res.status(404).json({
+      message: errorMessage,
+      details: e,
+    });
+  }
+};
 export const postController = {
   createPost,
   getAllPost,
   getPostById,
   getMyPost,
+  updatePost,
+  deletePost,
+  getStats,
 };
